@@ -10,12 +10,15 @@ namespace UkrainianLyrics.WebAPI
             var builder = WebApplication.CreateBuilder(args);
 
             Directory.CreateDirectory(AppDbContext.DbDirectoryPath);
+            Directory.CreateDirectory(LuceneSearchEngine.IndexDirectoryPath);
 
             builder.Services
                 .AddDbContext<AppDbContext>(options
                 => options.UseSqlite($"Data Source={AppDbContext.DbPath}"));
 
-            builder.Services.AddScoped<IAppRepository, AppRepository>();
+            builder.Services
+                .AddScoped<IAppRepository, AppRepository>()
+                .AddSingleton<LuceneSearchEngine>();
 
             builder.Services.AddControllers();
 

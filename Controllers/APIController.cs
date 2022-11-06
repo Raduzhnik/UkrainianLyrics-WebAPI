@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Xml.Linq;
 using UkrainianLyrics.Shared;
 using UkrainianLyrics.Shared.Models;
 using UkrainianLyrics.Shared.Payloads;
@@ -12,10 +11,12 @@ namespace UkrainianLyrics.WebAPI.Controllers;
 public class APIController : ControllerBase
 {
     private readonly IAppRepository repository;
+    private readonly LuceneSearchEngine searchEngine;
 
-    public APIController(IAppRepository repository)
+    public APIController(IAppRepository repository, LuceneSearchEngine searchEngine)
     {
         this.repository = repository;
+        this.searchEngine = searchEngine;
     }
 
     [HttpGet("compositions")]
@@ -61,4 +62,20 @@ public class APIController : ControllerBase
     [HttpGet("writings")]
     public async Task<IActionResult> GetAuthorsWritings([FromHeader] Guid authorId)
         => Ok(Mapper.MapCompositions((await repository.GetAuthorAsync(authorId)).Writings));
+
+    [HttpGet("search")]
+    public IActionResult Search([FromHeader] string searchTerms)
+    {
+        IList<object> results = new List<object>();
+
+        foreach (object model in searchEngine.TextSearch(searchTerms))
+        {
+            if (model is Composition)
+                results.Add(Mapper.MapComposition((Composition)model));
+            else if (model is Author)
+                results.Add(Mapper.MapAuthor((Author)model));
+        }
+
+        return Ok(results);
+    }
 }

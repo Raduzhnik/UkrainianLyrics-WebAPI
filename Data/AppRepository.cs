@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Storage;
-using UkrainianLyrics.Shared.Models;
+﻿using UkrainianLyrics.Shared.Models;
 using UkrainianLyrics.Shared.Payloads;
 
 namespace UkrainianLyrics.WebAPI.Data;
@@ -8,10 +6,12 @@ namespace UkrainianLyrics.WebAPI.Data;
 public class AppRepository : IAppRepository
 {
     private readonly AppDbContext dbContext;
+    private readonly LuceneSearchEngine searchEngine;
 
-    public AppRepository(AppDbContext dbContext)
+    public AppRepository(AppDbContext dbContext, LuceneSearchEngine searchEngine)
     {
         this.dbContext = dbContext;
+        this.searchEngine = searchEngine;
     }
 
     public IQueryable<Composition> Compositions => dbContext.Compositons;
@@ -25,6 +25,8 @@ public class AppRepository : IAppRepository
         dbContext.Authors.Add(model);
         dbContext.SaveChanges();
 
+        searchEngine.AddToIndex(model);
+
         return model;
     }
 
@@ -34,6 +36,8 @@ public class AppRepository : IAppRepository
 
         await dbContext.Authors.AddAsync(model);
         await dbContext.SaveChangesAsync();
+
+        searchEngine.AddToIndex(model);
 
         return model;
     }
@@ -49,6 +53,8 @@ public class AppRepository : IAppRepository
         dbContext.Compositons.Add(model);
         dbContext.SaveChanges();
 
+        searchEngine.AddToIndex(model);
+
         return model;
     }
 
@@ -63,6 +69,8 @@ public class AppRepository : IAppRepository
         await dbContext.Compositons.AddAsync(model);
         await dbContext.SaveChangesAsync();
 
+        searchEngine.AddToIndex(model);
+
         return model;
     }
 
@@ -73,6 +81,8 @@ public class AppRepository : IAppRepository
         dbContext.Authors.Remove(model);
         dbContext.SaveChanges();
 
+        searchEngine.RemoveFromIndex(id);
+
         return model;
     }
 
@@ -80,6 +90,8 @@ public class AppRepository : IAppRepository
     {
         dbContext.Authors.Remove(author);
         dbContext.SaveChanges();
+
+        searchEngine.RemoveFromIndex(author.Id);
 
         return author;
     }
@@ -91,6 +103,8 @@ public class AppRepository : IAppRepository
         dbContext.Authors.Remove(model);
         await dbContext.SaveChangesAsync();
 
+        searchEngine.RemoveFromIndex(id);
+
         return model;
     }
 
@@ -98,6 +112,8 @@ public class AppRepository : IAppRepository
     {
         dbContext.Authors.Remove(author);
         await dbContext.SaveChangesAsync();
+
+        searchEngine.RemoveFromIndex(author.Id);
 
         return author;
     }
@@ -109,6 +125,8 @@ public class AppRepository : IAppRepository
         dbContext.Compositons.Remove(model);
         dbContext.SaveChanges();
 
+        searchEngine.RemoveFromIndex(id);
+
         return model;
     }
 
@@ -116,6 +134,8 @@ public class AppRepository : IAppRepository
     {
         dbContext.Compositons.Remove(composition);
         dbContext.SaveChanges();
+
+        searchEngine.RemoveFromIndex(composition.Id);
 
         return composition;
     }
@@ -127,6 +147,8 @@ public class AppRepository : IAppRepository
         dbContext.Compositons.Remove(model);
         await dbContext.SaveChangesAsync();
 
+        searchEngine.RemoveFromIndex(id);
+
         return model;
     }
 
@@ -134,6 +156,8 @@ public class AppRepository : IAppRepository
     {
         dbContext.Compositons.Remove(composition);
         await dbContext.SaveChangesAsync();
+
+        searchEngine.RemoveFromIndex(composition.Id);
 
         return composition;
     }
@@ -188,6 +212,8 @@ public class AppRepository : IAppRepository
 
         dbContext.SaveChanges();
 
+        searchEngine.ModifyIndex(model);
+
         return model;
     }
 
@@ -200,6 +226,8 @@ public class AppRepository : IAppRepository
         if (payload.ImageUri is not null) model.ImageUri = payload.ImageUri;
 
         await dbContext.SaveChangesAsync();
+
+        searchEngine.ModifyIndex(model);
 
         return model;
     }
@@ -223,6 +251,8 @@ public class AppRepository : IAppRepository
 
         dbContext.SaveChanges();
 
+        searchEngine.ModifyIndex(model);
+
         return model;
     }
 
@@ -244,6 +274,8 @@ public class AppRepository : IAppRepository
         if (payload.Description is not null) model.Description = payload.Description;
 
         await dbContext.SaveChangesAsync();
+
+        searchEngine.ModifyIndex(model);
 
         return model;
     }
